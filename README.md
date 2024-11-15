@@ -35,6 +35,7 @@ addon | version | maintainers | summary
 [product_form_account_move_line_link](product_form_account_move_line_link/) | 17.0.1.0.0 |  | Adds a button on product forms to access Journal Items
 [sale_invoicing_date_selection](sale_invoicing_date_selection/) | 17.0.1.0.0 | [![sergio-teruel](https://github.com/sergio-teruel.png?size=30px)](https://github.com/sergio-teruel) | Set date invoice when you create invoices
 [sale_order_invoicing_grouping_criteria](sale_order_invoicing_grouping_criteria/) | 17.0.1.0.0 | [![pedrobaeza](https://github.com/pedrobaeza.png?size=30px)](https://github.com/pedrobaeza) | Sales order invoicing grouping criteria
+[sale_order_invoicing_qty_percentage](sale_order_invoicing_qty_percentage/) | 17.0.1.0.0 | [![pedrobaeza](https://github.com/pedrobaeza.png?size=30px)](https://github.com/pedrobaeza) | Sales order invoicing by percentage of the quantity
 
 [//]: # (end addons)
 
