@@ -1,8 +1,10 @@
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
+from smtplib import SMTPServerDisconnected
 
-from odoo.tests import TransactionCase
+from odoo.tests import TransactionCase, patch
 
+from odoo.addons.queue_job.exception import RetryableJobError
 from odoo.addons.queue_job.tests.common import trap_jobs
 
 
@@ -161,3 +163,34 @@ class TestAccountInvoiceMassSending(TransactionCase):
             )
             trap.perform_enqueued_jobs()
             self.assertFalse(self.first_eligible_invoice.sending_in_progress)
+
+    @patch(
+        "odoo.addons.mail.models.mail_mail.MailMail.send",
+        side_effect=SMTPServerDisconnected("please run connect() first"),
+    )
+    def test_gmail_too_many_login_attempts(self, patched_send_email):
+        """Test jobs are retried when Gmail is picky about login attempts.
+
+        This can happen easily if your SMTP provider is Gmail and you have
+        tons of invoices to send in parallel. Gmail will not like so many
+        login attempts and fail with error 454 (see
+        https://support.google.com/mail/answer/7126229).
+        """
+        with trap_jobs() as trap:
+            wizard = self.wizard_obj.with_context(
+                active_ids=self.first_eligible_invoice.ids,
+                active_model=self.first_eligible_invoice._name,
+                discard_logo_check=True,
+            ).create({})
+            wizard.enqueue_invoices()
+            self.assertTrue(self.first_eligible_invoice.sending_in_progress)
+            trap.assert_enqueued_job(
+                self.first_eligible_invoice._send_invoice_individually,
+                kwargs={"template": self.mail_template_obj},
+                properties={
+                    "channel": "root.account_invoice_mass_sending_channel",
+                },
+            )
+            trap.assert_jobs_count(1)
+            with self.assertRaises(RetryableJobError):
+                trap.perform_enqueued_jobs()

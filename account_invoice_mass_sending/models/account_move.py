@@ -1,7 +1,11 @@
 # Copyright 2019 ACSONE SA/NV
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
+from smtplib import SMTPServerDisconnected
+
 from odoo import _, fields, models
+
+from odoo.addons.queue_job.exception import RetryableJobError
 
 
 class AccountInvoice(models.Model):
@@ -66,4 +70,8 @@ class AccountInvoice(models.Model):
                 "sending_in_progress": False,
             }
         )
-        return wiz.send_and_print_action()
+        try:
+            return wiz.send_and_print_action()
+        except SMTPServerDisconnected as err:
+            self.sending_in_progress = True
+            raise RetryableJobError("SMTP server disconnected") from err
